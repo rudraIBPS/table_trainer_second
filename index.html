@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Math Master">
+<meta name="theme-color" content="#f0c040">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Math Master Trainer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0a0a0f; --card:#13131f; --border:#1e1e30;
+    --accent:#f0c040; --accent2:#60e0c0; --accent3:#c060f0; --accent4:#f07060;
+    --text:#e8e8f0; --muted:#6060a0; --correct:#40c080; --wrong:#f04060;
+    --safe-top:env(safe-area-inset-top,0px); --safe-bot:env(safe-area-inset-bottom,0px);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overscroll-behavior:none;}
+  body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;overflow-x:hidden;padding-top:var(--safe-top);padding-bottom:var(--safe-bot);}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background-image:linear-gradient(rgba(240,192,64,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(240,192,64,0.03) 1px,transparent 1px);background-size:40px 40px;}
+  .container{position:relative;z-index:1;max-width:700px;margin:0 auto;padding:16px 14px 120px;}
+  header{text-align:center;padding:20px 0 16px;}
+  header h1{font-size:clamp(1.4rem,6vw,2.2rem);font-weight:800;letter-spacing:-1px;color:var(--accent);line-height:1.1;}
+  header p{color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:0.72rem;margin-top:4px;letter-spacing:2px;text-transform:uppercase;}
+
+  .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(13,13,26,0.97);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);display:flex;padding-bottom:var(--safe-bot);z-index:100;overflow-x:auto;scrollbar-width:none;}
+  .bottom-nav::-webkit-scrollbar{display:none;}
+  .nav-btn{flex:1;min-width:56px;padding:10px 2px 8px;border:none;background:transparent;color:var(--muted);font-family:'Syne',sans-serif;font-weight:700;font-size:0.58rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color 0.2s;}
+  .nav-btn .nav-icon{font-size:1.1rem;}
+  .nav-btn.active{color:var(--accent);}
+  .nav-btn.active .nav-icon{filter:drop-shadow(0 0 6px rgba(240,192,64,0.6));}
+
+  .tab-content{display:none;}
+  .tab-content.active{display:block;}
+
+  .streak-bar{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 16px;margin-bottom:16px;font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--muted);flex-wrap:wrap;}
+  .streak-count{font-weight:700;color:var(--accent);font-size:0.95rem;}
+
+  .section-label{font-size:0.67rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;padding-left:2px;}
+  .section-divider{margin:20px 0 14px;border:none;border-top:1px solid var(--border);}
+
+  .table-selector{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:16px;}
+  .table-btn{padding:12px 4px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.92rem;font-weight:700;cursor:pointer;transition:all 0.2s;text-align:center;touch-action:manipulation;}
+  .table-btn:active{transform:scale(0.94);}
+  .table-btn.selected{background:var(--accent);color:#000;border-color:var(--accent);}
+  .table-display{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+  .table-header{background:linear-gradient(135deg,#1a1a2e,#16213e);padding:14px 18px;font-size:1.1rem;font-weight:800;color:var(--accent);border-bottom:1px solid var(--border);font-family:'JetBrains Mono',monospace;}
+  .table-row{display:flex;align-items:center;padding:10px 18px;border-bottom:1px solid rgba(30,30,48,0.6);animation:rowIn 0.3s ease forwards;opacity:0;font-family:'JetBrains Mono',monospace;}
+  .table-row:last-child{border-bottom:none;}
+  @keyframes rowIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+  .row-index{width:28px;font-size:0.68rem;color:var(--muted);}
+  .row-expr{flex:1;font-size:0.9rem;color:var(--text);}
+  .row-eq{color:var(--muted);margin:0 5px;}
+  .row-result{font-size:1rem;font-weight:700;color:var(--accent2);}
+  .row-tag{font-size:0.62rem;color:var(--accent3);margin-left:8px;background:rgba(192,96,240,0.1);padding:2px 5px;border-radius:4px;white-space:nowrap;}
+
+  .quiz-settings{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;}
+  .setting-group{flex:1;min-width:90px;}
+  .setting-label{font-size:0.67rem;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+  .setting-select{width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'JetBrains Mono',monospace;padding:9px 10px;font-size:0.82rem;outline:none;cursor:pointer;-webkit-appearance:none;}
+  .start-quiz-btn{width:100%;padding:14px;background:var(--accent);color:#000;border:none;border-radius:14px;font-family:'Syne',sans-serif;font-weight:800;font-size:0.95rem;cursor:pointer;letter-spacing:1px;transition:all 0.15s;margin-bottom:14px;touch-action:manipulation;}
+  .start-quiz-btn:active{transform:scale(0.97);background:#ffd050;}
+
+  .timer-ring-wrap{position:relative;width:64px;height:64px;margin:0 auto 10px;}
+  .timer-ring{transform:rotate(-90deg);}
+  .timer-ring-bg{fill:none;stroke:var(--border);stroke-width:4;}
+  .timer-ring-fill{fill:none;stroke:var(--accent);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset 0.25s linear,stroke 0.25s;}
+  .timer-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:1rem;font-weight:700;color:var(--accent);}
+  .timer-text.urgent{color:var(--wrong);}
+
+  .score-bar{display:flex;gap:8px;justify-content:center;margin-bottom:14px;}
+  .score-item{flex:1;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:9px 6px;text-align:center;font-family:'JetBrains Mono',monospace;}
+  .score-num{font-size:1.3rem;font-weight:700;}
+  .score-lbl{font-size:0.59rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;}
+  .score-item.c .score-num{color:var(--correct);}
+  .score-item.w .score-num{color:var(--wrong);}
+  .score-item.t .score-num{color:var(--accent);}
+  .score-item.tm .score-num{color:var(--accent2);}
+
+  .quiz-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px 16px;text-align:center;display:none;}
+  .quiz-card.active{display:block;}
+  .quiz-progress-bar{height:4px;background:var(--border);border-radius:4px;margin-bottom:18px;overflow:hidden;}
+  .quiz-progress-fill{height:100%;background:var(--accent);border-radius:4px;transition:width 0.4s ease;}
+  .quiz-question{font-size:clamp(2rem,9vw,3.2rem);font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--text);margin-bottom:4px;letter-spacing:-2px;}
+  .quiz-question span{color:var(--accent);}
+  .quiz-subtitle{font-size:0.67rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:16px;letter-spacing:2px;}
+
+  .options-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:14px;}
+  .option-btn{padding:16px 8px;background:#0d0d1a;border:2px solid var(--border);border-radius:14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:1.2rem;font-weight:700;cursor:pointer;transition:all 0.15s;touch-action:manipulation;}
+  .option-btn:active:not(:disabled){transform:scale(0.95);}
+  .option-btn.correct{border-color:var(--correct);background:rgba(64,192,128,0.12);color:var(--correct);}
+  .option-btn.wrong{border-color:var(--wrong);background:rgba(240,64,96,0.1);color:var(--wrong);}
+  .option-btn.timeout-opt{border-color:var(--muted);background:rgba(96,96,160,0.1);color:var(--muted);}
+  .option-btn:disabled{cursor:default;}
+
+  .quiz-feedback{min-height:34px;font-size:0.95rem;font-weight:700;font-family:'JetBrains Mono',monospace;margin-bottom:12px;}
+  .quiz-feedback.correct{color:var(--correct);}
+  .quiz-feedback.wrong{color:var(--wrong);}
+  .quiz-feedback.timeout{color:var(--muted);}
+  .next-btn{padding:12px 32px;background:transparent;border:2px solid var(--accent);border-radius:12px;color:var(--accent);font-family:'Syne',sans-serif;font-weight:700;font-size:0.92rem;cursor:pointer;transition:all 0.15s;display:none;touch-action:manipulation;}
+  .next-btn:active{background:var(--accent);color:#000;}
+  .next-btn.visible{display:inline-block;}
+
+  .type-input{width:100%;background:#0d0d1a;border:2px solid var(--border);border-radius:14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:2rem;font-weight:700;padding:16px;text-align:center;outline:none;transition:border-color 0.2s;margin-bottom:10px;-webkit-appearance:none;}
+  .type-input:focus{border-color:var(--accent);}
+  .type-input.correct-input{border-color:var(--correct);}
+  .type-input.wrong-input{border-color:var(--wrong);}
+  .submit-btn{padding:12px 28px;background:var(--accent);color:#000;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-weight:800;font-size:0.92rem;cursor:pointer;transition:all 0.15s;touch-action:manipulation;margin-bottom:2px;}
+  .submit-btn:active{transform:scale(0.96);background:#ffd050;}
+
+  .results-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px 18px;text-align:center;display:none;}
+  .results-card.active{display:block;}
+  .results-emoji{font-size:2.8rem;margin-bottom:10px;}
+  .results-title{font-size:1.5rem;font-weight:800;color:var(--accent);margin-bottom:6px;}
+  .results-score{font-size:0.9rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:6px;}
+  .results-timing{font-size:0.8rem;color:var(--accent2);font-family:'JetBrains Mono',monospace;margin-bottom:20px;}
+  .retry-btn{padding:12px 28px;background:var(--accent);color:#000;border:none;border-radius:12px;font-family:'Syne',sans-serif;font-weight:800;font-size:0.95rem;cursor:pointer;touch-action:manipulation;}
+  .retry-btn:active{background:#ffd050;}
+
+  .cube-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+  .cube-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;}
+  .cube-num{font-size:1.5rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent3);}
+  .cube-expr{font-size:0.73rem;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+  .cube-result{font-size:1.1rem;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent2);margin-top:4px;}
+
+  .consec-pair{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:11px 14px;margin-bottom:7px;font-family:'JetBrains Mono',monospace;display:flex;align-items:center;gap:8px;}
+  .consec-nums{font-size:1rem;font-weight:700;color:var(--accent);flex:1;}
+  .consec-result{font-size:0.95rem;color:var(--accent2);}
+  .consec-badge{font-size:0.62rem;color:var(--muted);background:rgba(96,96,160,0.15);border-radius:6px;padding:2px 6px;white-space:nowrap;}
+
+  .twin-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;margin-bottom:8px;}
+  .twin-result{font-size:1.3rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent);margin-bottom:6px;}
+  .twin-pairs{display:flex;flex-wrap:wrap;gap:6px;}
+  .twin-chip{background:rgba(240,192,64,0.08);border:1px solid rgba(240,192,64,0.2);border-radius:8px;padding:4px 10px;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text);}
+
+  .tracker-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;}
+  .tracker-stat{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;}
+  .tracker-num{font-size:1.6rem;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent);}
+  .tracker-lbl{font-size:0.64rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px;font-family:'JetBrains Mono',monospace;}
+  .tracker-sub{font-size:0.74rem;color:var(--accent2);font-family:'JetBrains Mono',monospace;margin-top:2px;}
+  .history-list{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;max-height:340px;overflow-y:auto;}
+  .history-item{display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid rgba(30,30,48,0.6);font-family:'JetBrains Mono',monospace;font-size:0.75rem;gap:8px;}
+  .history-item:last-child{border-bottom:none;}
+  .hist-date{color:var(--muted);min-width:72px;}
+  .hist-mode{color:var(--accent3);min-width:48px;}
+  .hist-score{color:var(--correct);flex:1;}
+  .hist-time{color:var(--accent2);}
+  .bar-chart-wrap{margin:8px 0;}
+  .bar-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+  .bar-lbl{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--muted);width:50px;text-align:right;}
+  .bar-track{flex:1;height:10px;background:var(--border);border-radius:6px;overflow:hidden;}
+  .bar-fill{height:100%;border-radius:6px;transition:width 0.6s ease;}
+  .bar-val{font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--accent2);width:44px;}
+  .clear-btn{background:transparent;border:1px solid var(--wrong);border-radius:10px;color:var(--wrong);font-family:'Syne',sans-serif;font-weight:700;font-size:0.8rem;padding:8px 16px;cursor:pointer;margin-top:12px;}
+  .clear-btn:active{background:rgba(240,64,96,0.1);}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>Math Master</h1>
+    <p>Tables 11-29 · Cubes · Multiples · Tracker</p>
+  </header>
+
+  <div class="streak-bar">
+    <span>&#x1F525;</span>
+    <span>Streak:</span><span class="streak-count" id="streakCount">0</span><span>days</span>
+    <span>|</span>
+    <span>Today:</span><span class="streak-count" id="todayCount">0</span><span>done</span>
+    <span>|</span>
+    <span>Best:</span><span class="streak-count" id="bestAvg">-</span><span>s/q</span>
+  </div>
+
+  <!-- LEARN -->
+  <div class="tab-content active" id="tab-learn">
+    <div class="section-label">Select table (11-29) — shows x1 to x15</div>
+    <div class="table-selector" id="tableSelector"></div>
+    <div class="table-display" id="tableDisplay">
+      <div class="table-header">Select a table above</div>
+    </div>
+  </div>
+
+  <!-- MCQ -->
+  <div class="tab-content" id="tab-mcq">
+    <div class="quiz-settings">
+      <div class="setting-group">
+        <div class="setting-label">Table</div>
+        <select class="setting-select" id="mcqRange"></select>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">Questions</div>
+        <select class="setting-select" id="mcqCount">
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="30">30</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">Time/Q</div>
+        <select class="setting-select" id="mcqTime">
+          <option value="0">No limit</option>
+          <option value="10">10s</option>
+          <option value="8" selected>8s</option>
+          <option value="6">6s</option>
+          <option value="5">5s</option>
+        </select>
+      </div>
+    </div>
+    <button class="start-quiz-btn" onclick="startMCQ()">Start MCQ Quiz</button>
+    <div class="score-bar" id="mcqScoreBar" style="display:none">
+      <div class="score-item c"><div class="score-num" id="mcqCorrect">0</div><div class="score-lbl">Correct</div></div>
+      <div class="score-item w"><div class="score-num" id="mcqWrong">0</div><div class="score-lbl">Wrong</div></div>
+      <div class="score-item t"><div class="score-num" id="mcqTotal">0</div><div class="score-lbl">Total</div></div>
+      <div class="score-item tm"><div class="score-num" id="mcqAvgTime">-</div><div class="score-lbl">Avg/s</div></div>
+    </div>
+    <div class="quiz-card" id="mcqCard">
+      <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="mcqProgressFill"></div></div>
+      <div class="timer-ring-wrap" id="mcqTimerWrap" style="display:none">
+        <svg class="timer-ring" viewBox="0 0 64 64" width="64" height="64">
+          <circle class="timer-ring-bg" cx="32" cy="32" r="28"/>
+          <circle class="timer-ring-fill" id="mcqRingFill" cx="32" cy="32" r="28" stroke-dasharray="175.9" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-text" id="mcqTimerText">8</div>
+      </div>
+      <div class="quiz-question" id="mcqQuestion">-</div>
+      <div class="quiz-subtitle" id="mcqSubtitle">WHAT IS THE ANSWER?</div>
+      <div class="options-grid" id="mcqOptions"></div>
+      <div class="quiz-feedback" id="mcqFeedback"></div>
+      <button class="next-btn" id="mcqNext" onclick="nextMCQ()">Next</button>
+    </div>
+    <div class="results-card" id="mcqResults">
+      <div class="results-emoji" id="mcqEmoji">&#x1F389;</div>
+      <div class="results-title" id="mcqResultTitle">Well done!</div>
+      <div class="results-score" id="mcqResultScore"></div>
+      <div class="results-timing" id="mcqResultTiming"></div>
+      <button class="retry-btn" onclick="startMCQ()">Try Again</button>
+    </div>
+  </div>
+
+  <!-- TYPE / PRACTICE -->
+  <div class="tab-content" id="tab-type">
+    <div class="quiz-settings">
+      <div class="setting-group">
+        <div class="setting-label">Table</div>
+        <select class="setting-select" id="typeRange"></select>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">Questions</div>
+        <select class="setting-select" id="typeCount">
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="30">30</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">Time/Q</div>
+        <select class="setting-select" id="typeTime">
+          <option value="0">No limit</option>
+          <option value="15">15s</option>
+          <option value="12" selected>12s</option>
+          <option value="10">10s</option>
+          <option value="8">8s</option>
+        </select>
+      </div>
+    </div>
+    <button class="start-quiz-btn" onclick="startType()">Start Practice</button>
+    <div class="score-bar" id="typeScoreBar" style="display:none">
+      <div class="score-item c"><div class="score-num" id="typeCorrect">0</div><div class="score-lbl">Correct</div></div>
+      <div class="score-item w"><div class="score-num" id="typeWrong">0</div><div class="score-lbl">Wrong</div></div>
+      <div class="score-item t"><div class="score-num" id="typeTotal">0</div><div class="score-lbl">Total</div></div>
+      <div class="score-item tm"><div class="score-num" id="typeAvgTime">-</div><div class="score-lbl">Avg/s</div></div>
+    </div>
+    <div class="quiz-card" id="typeCard">
+      <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="typeProgressFill"></div></div>
+      <div class="timer-ring-wrap" id="typeTimerWrap" style="display:none">
+        <svg class="timer-ring" viewBox="0 0 64 64" width="64" height="64">
+          <circle class="timer-ring-bg" cx="32" cy="32" r="28"/>
+          <circle class="timer-ring-fill" id="typeRingFill" cx="32" cy="32" r="28" stroke-dasharray="175.9" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-text" id="typeTimerText">12</div>
+      </div>
+      <div class="quiz-question" id="typeQuestion">-</div>
+      <div class="quiz-subtitle">TYPE YOUR ANSWER</div>
+      <input type="number" inputmode="numeric" class="type-input" id="typeInput" placeholder="?" onkeydown="handleTypeKey(event)">
+      <button class="submit-btn" onclick="submitType()">Submit</button>
+      <div class="quiz-feedback" id="typeFeedback"></div>
+      <button class="next-btn" id="typeNext" onclick="nextType()">Next</button>
+    </div>
+    <div class="results-card" id="typeResults">
+      <div class="results-emoji" id="typeEmoji">&#x1F389;</div>
+      <div class="results-title" id="typeResultTitle">Well done!</div>
+      <div class="results-score" id="typeResultScore"></div>
+      <div class="results-timing" id="typeResultTiming"></div>
+      <button class="retry-btn" onclick="startType()">Try Again</button>
+    </div>
+  </div>
+
+  <!-- CUBES -->
+  <div class="tab-content" id="tab-cubes">
+    <div class="section-label">Cubes: 3 to 25</div>
+    <div class="cube-grid" id="cubeGrid1"></div>
+    <hr class="section-divider">
+    <div class="section-label">Special cubes (primes and interesting numbers)</div>
+    <div class="cube-grid" id="cubeGrid2"></div>
+    <hr class="section-divider">
+    <div class="section-label">Practice cubes</div>
+    <div class="quiz-settings">
+      <div class="setting-group">
+        <div class="setting-label">Set</div>
+        <select class="setting-select" id="cubeSet">
+          <option value="basic">3-25</option>
+          <option value="special">Special</option>
+          <option value="all">All</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">Time/Q</div>
+        <select class="setting-select" id="cubeTime">
+          <option value="0">No limit</option>
+          <option value="10">10s</option>
+          <option value="8" selected>8s</option>
+          <option value="6">6s</option>
+        </select>
+      </div>
+    </div>
+    <button class="start-quiz-btn" onclick="startCubeQuiz()">Practice Cubes</button>
+    <div class="score-bar" id="cubeScoreBar" style="display:none">
+      <div class="score-item c"><div class="score-num" id="cubeCorrect">0</div><div class="score-lbl">Correct</div></div>
+      <div class="score-item w"><div class="score-num" id="cubeWrong">0</div><div class="score-lbl">Wrong</div></div>
+      <div class="score-item t"><div class="score-num" id="cubeTotal">0</div><div class="score-lbl">Total</div></div>
+      <div class="score-item tm"><div class="score-num" id="cubeAvgTime">-</div><div class="score-lbl">Avg/s</div></div>
+    </div>
+    <div class="quiz-card" id="cubeCard">
+      <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="cubeProgressFill"></div></div>
+      <div class="timer-ring-wrap" id="cubeTimerWrap" style="display:none">
+        <svg class="timer-ring" viewBox="0 0 64 64" width="64" height="64">
+          <circle class="timer-ring-bg" cx="32" cy="32" r="28"/>
+          <circle class="timer-ring-fill" id="cubeRingFill" cx="32" cy="32" r="28" stroke-dasharray="175.9" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-text" id="cubeTimerText">8</div>
+      </div>
+      <div class="quiz-question" id="cubeQuestion">-</div>
+      <div class="quiz-subtitle">n cubed = ?</div>
+      <input type="number" inputmode="numeric" class="type-input" id="cubeInput" placeholder="?" onkeydown="handleCubeKey(event)">
+      <button class="submit-btn" onclick="submitCube()">Submit</button>
+      <div class="quiz-feedback" id="cubeFeedback"></div>
+      <button class="next-btn" id="cubeNext" onclick="nextCube()">Next</button>
+    </div>
+    <div class="results-card" id="cubeResults">
+      <div class="results-emoji" id="cubeEmoji">&#x1F389;</div>
+      <div class="results-title" id="cubeResultTitle">Well done!</div>
+      <div class="results-score" id="cubeResultScore"></div>
+      <div class="results-timing" id="cubeResultTiming"></div>
+      <button class="retry-btn" onclick="startCubeQuiz()">Try Again</button>
+    </div>
+  </div>
+
+  <!-- CONSECUTIVE MULTIPLES -->
+  <div class="tab-content" id="tab-consec">
+    <div class="section-label">n x (n+1) for n = 1 to 25</div>
+    <div id="consecList"></div>
+    <hr class="section-divider">
+    <div class="section-label">Multi-digit consecutive (12x23, 23x34 ...)</div>
+    <div id="consecListMulti"></div>
+    <hr class="section-divider">
+    <div class="section-label">Practice consecutive multiples</div>
+    <div class="quiz-settings">
+      <div class="setting-group">
+        <div class="setting-label">Set</div>
+        <select class="setting-select" id="consecSet">
+          <option value="single">n x (n+1)</option>
+          <option value="multi">12x23...</option>
+          <option value="all" selected>All</option>
+        </select>
+      </div>
+      <div class="setting-group">
+        <div class="setting-label">Time/Q</div>
+        <select class="setting-select" id="consecTime">
+          <option value="0">No limit</option>
+          <option value="12">12s</option>
+          <option value="10" selected>10s</option>
+          <option value="8">8s</option>
+        </select>
+      </div>
+    </div>
+    <button class="start-quiz-btn" onclick="startConsecQuiz()">Practice Consecutive</button>
+    <div class="score-bar" id="consecScoreBar" style="display:none">
+      <div class="score-item c"><div class="score-num" id="consecCorrect">0</div><div class="score-lbl">Correct</div></div>
+      <div class="score-item w"><div class="score-num" id="consecWrong">0</div><div class="score-lbl">Wrong</div></div>
+      <div class="score-item t"><div class="score-num" id="consecTotal">0</div><div class="score-lbl">Total</div></div>
+      <div class="score-item tm"><div class="score-num" id="consecAvgTime">-</div><div class="score-lbl">Avg/s</div></div>
+    </div>
+    <div class="quiz-card" id="consecCard">
+      <div class="quiz-progress-bar"><div class="quiz-progress-fill" id="consecProgressFill"></div></div>
+      <div class="timer-ring-wrap" id="consecTimerWrap" style="display:none">
+        <svg class="timer-ring" viewBox="0 0 64 64" width="64" height="64">
+          <circle class="timer-ring-bg" cx="32" cy="32" r="28"/>
+          <circle class="timer-ring-fill" id="consecRingFill" cx="32" cy="32" r="28" stroke-dasharray="175.9" stroke-dashoffset="0"/>
+        </svg>
+        <div class="timer-text" id="consecTimerText">10</div>
+      </div>
+      <div class="quiz-question" id="consecQuestion">-</div>
+      <div class="quiz-subtitle">TYPE YOUR ANSWER</div>
+      <input type="number" inputmode="numeric" class="type-input" id="consecInput" placeholder="?" onkeydown="handleConsecKey(event)">
+      <button class="submit-btn" onclick="submitConsec()">Submit</button>
+      <div class="quiz-feedback" id="consecFeedback"></div>
+      <button class="next-btn" id="consecNext" onclick="nextConsec()">Next</button>
+    </div>
+    <div class="results-card" id="consecResults">
+      <div class="results-emoji" id="consecEmoji">&#x1F389;</div>
+      <div class="results-title" id="consecResultTitle">Well done!</div>
+      <div class="results-score" id="consecResultScore"></div>
+      <div class="results-timing" id="consecResultTiming"></div>
+      <button class="retry-btn" onclick="startConsecQuiz()">Try Again</button>
+    </div>
+  </div>
+
+  <!-- TWINS -->
+  <div class="tab-content" id="tab-twins">
+    <div class="section-label">Products reachable multiple ways across all tables</div>
+    <div id="twinsList"></div>
+  </div>
+
+  <!-- TRACKER -->
+  <div class="tab-content" id="tab-tracker">
+    <div class="tracker-grid" id="trackerStats"></div>
+    <div class="section-label" style="margin-top:4px">Speed trend - avg sec/q (last 10 sessions)</div>
+    <div class="bar-chart-wrap" id="speedChart"></div>
+    <div class="section-label" style="margin-top:14px">Accuracy trend (last 10 sessions)</div>
+    <div class="bar-chart-wrap" id="accChart"></div>
+    <div class="section-label" style="margin-top:14px">Recent sessions</div>
+    <div class="history-list" id="historyList"></div>
+    <button class="clear-btn" onclick="clearHistory()">Clear All History</button>
+  </div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-learn"   onclick="switchTab('learn')">  <span class="nav-icon">&#x1F4D6;</span>Learn</button>
+  <button class="nav-btn"        id="nav-mcq"     onclick="switchTab('mcq')">    <span class="nav-icon">&#x1F3AF;</span>MCQ</button>
+  <button class="nav-btn"        id="nav-type"    onclick="switchTab('type')">   <span class="nav-icon">&#x2328;&#xFE0F;</span>Type</button>
+  <button class="nav-btn"        id="nav-cubes"   onclick="switchTab('cubes')">  <span class="nav-icon">&#x1F3B2;</span>Cubes</button>
+  <button class="nav-btn"        id="nav-consec"  onclick="switchTab('consec')"> <span class="nav-icon">&#x1F517;</span>Consec</button>
+  <button class="nav-btn"        id="nav-twins"   onclick="switchTab('twins')">  <span class="nav-icon">&#x264A;</span>Twins</button>
+  <button class="nav-btn"        id="nav-tracker" onclick="switchTab('tracker')"><span class="nav-icon">&#x1F4C8;</span>Track</button>
+</nav>
+
+<script>
+// ============================================================
+// CONSTANTS
+// ============================================================
+var TABLES      = [];
+for(var _i=11;_i<=29;_i++) TABLES.push(_i);
+
+var LEARN_MULTS = [];
+for(var _i=1;_i<=15;_i++) LEARN_MULTS.push(_i);
+
+var QUIZ_MULTS  = [];
+for(var _i=1;_i<=29;_i++) QUIZ_MULTS.push(_i);
+
+var CUBE_BASIC   = [];
+for(var _i=3;_i<=25;_i++) CUBE_BASIC.push(_i);
+
+var CUBE_SPECIAL = [29,31,37,41,43,47,53,59,61,67,71,73,79,83,87,89,95,97,99];
+
+// Build twin-map ONCE at startup (O(n^2)) — fast O(1) lookups in showTable
+var TWIN_MAP = {};
+TABLES.forEach(function(t){
+  QUIZ_MULTS.forEach(function(m){
+    var ans = t*m;
+    if(!TWIN_MAP[ans]) TWIN_MAP[ans]=[];
+    TWIN_MAP[ans].push(t+'x'+m);
+  });
+});
+for(var _t=2;_t<=10;_t++){
+  for(var _m=_t;_m<=10;_m++){
+    var _ans=_t*_m;
+    if(!TWIN_MAP[_ans]) TWIN_MAP[_ans]=[];
+    var _key=_t+'x'+_m;
+    if(TWIN_MAP[_ans].indexOf(_key)===-1) TWIN_MAP[_ans].push(_key);
+  }
+}
+
+// Consecutive sets
+var CONSEC_SINGLE=[];
+for(var _i=1;_i<=25;_i++) CONSEC_SINGLE.push({a:_i,b:_i+1,ans:_i*(_i+1)});
+
+var CONSEC_MULTI=[];
+for(var _i=1;_i<=20;_i++){
+  var _a=parseInt(''+_i+(_i+1));
+  var _b=parseInt(''+(_i+1)+(_i+2));
+  if(!isNaN(_a)&&!isNaN(_b)&&_a<1000&&_b<1000) CONSEC_MULTI.push({a:_a,b:_b,ans:_a*_b});
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+function shuffle(arr){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=a[i];a[i]=a[j];a[j]=tmp;}
+  return a;
+}
+function getAll(tables){
+  var q=[];
+  tables.forEach(function(t){QUIZ_MULTS.forEach(function(m){q.push({t:t,m:m,ans:t*m});});});
+  return q;
+}
+function getTables(v){
+  if(v==='all') return TABLES;
+  return v.split(',').map(Number);
+}
+function medal(pct){return pct>=90?'Trophy':pct>=70?'Party':pct>=50?'Strong':'Books';}
+function medalEmoji(pct){return pct>=90?'\uD83C\uDFC6':pct>=70?'\uD83C\uDF89':pct>=50?'\uD83D\uDCAA':'\uD83D\uDCDA';}
+function gradeText(pct){return pct>=90?'Excellent!':pct>=70?'Great job!':pct>=50?'Keep going!':'More practice!';}
+function arrAvg(arr){return arr.length?arr.reduce(function(a,b){return a+b;},0)/arr.length:0;}
+
+// ============================================================
+// STORAGE
+// ============================================================
+function getHistory(){
+  try{return JSON.parse(localStorage.getItem('mm_history')||'[]');}
+  catch(e){return [];}
+}
+function saveSession(mode,correct,total,avgTimeVal){
+  var hist=getHistory();
+  hist.unshift({date:new Date().toLocaleDateString(),mode:mode,correct:correct,total:total,avgTime:parseFloat(avgTimeVal.toFixed(2))});
+  if(hist.length>60) hist.length=60;
+  localStorage.setItem('mm_history',JSON.stringify(hist));
+}
+function clearHistory(){
+  if(confirm('Clear all session history?')){
+    localStorage.removeItem('mm_history');
+    renderTracker();
+  }
+}
+
+// ============================================================
+// STREAK
+// ============================================================
+function updateStreak(){
+  var today=new Date().toDateString();
+  var lastDay=localStorage.getItem('mm_lastDay');
+  var streak=parseInt(localStorage.getItem('mm_streak')||'0');
+  var todayCount=parseInt(localStorage.getItem('mm_todayCount')||'0');
+  if(lastDay!==today){
+    var yesterday=new Date(Date.now()-86400000).toDateString();
+    streak=(lastDay===yesterday)?streak+1:(lastDay?1:0);
+    todayCount=0;
+    localStorage.setItem('mm_lastDay',today);
+    localStorage.setItem('mm_streak',streak);
+    localStorage.setItem('mm_todayCount','0');
+  }
+  document.getElementById('streakCount').textContent=streak;
+  document.getElementById('todayCount').textContent=todayCount;
+  var hist=getHistory();
+  var times=hist.map(function(s){return s.avgTime;}).filter(function(t){return t>0;});
+  document.getElementById('bestAvg').textContent=times.length?Math.min.apply(null,times).toFixed(1):'-';
+}
+function incrementToday(){
+  var c=parseInt(localStorage.getItem('mm_todayCount')||'0')+1;
+  localStorage.setItem('mm_todayCount',String(c));
+  if(!localStorage.getItem('mm_lastDay')) localStorage.setItem('mm_lastDay',new Date().toDateString());
+  updateStreak();
+}
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+var ALL_TABS=['learn','mcq','type','cubes','consec','twins','tracker'];
+function switchTab(name){
+  stopTimer();
+  ALL_TABS.forEach(function(t){
+    document.getElementById('tab-'+t).classList.toggle('active',t===name);
+    document.getElementById('nav-'+t).classList.toggle('active',t===name);
+  });
+  if(name==='tracker') renderTracker();
+}
+
+// ============================================================
+// TIMER
+// ============================================================
+var _timerId=null;
+function stopTimer(){if(_timerId!==null){clearInterval(_timerId);_timerId=null;}}
+function startTimer(secs,ringId,textId,wrapId,onExpire){
+  stopTimer();
+  var wrap=document.getElementById(wrapId);
+  if(!secs){wrap.style.display='none';return;}
+  var CIRC=175.9;
+  var ring=document.getElementById(ringId);
+  var txt=document.getElementById(textId);
+  wrap.style.display='block';
+  var left=secs;
+  ring.style.strokeDashoffset='0';
+  ring.style.stroke='var(--accent)';
+  txt.textContent=left;
+  txt.className='timer-text';
+  _timerId=setInterval(function(){
+    left--;
+    ring.style.strokeDashoffset=CIRC*(1-left/secs);
+    ring.style.stroke=left<=3?'var(--wrong)':left<=5?'var(--accent4)':'var(--accent)';
+    txt.textContent=left;
+    txt.className='timer-text'+(left<=3?' urgent':'');
+    if(left<=0){stopTimer();onExpire();}
+  },1000);
+}
+
+// ============================================================
+// RANGE DROPDOWNS
+// ============================================================
+function buildRangeSelect(id){
+  var s=document.getElementById(id);
+  s.innerHTML='';
+  function add(v,l){var o=document.createElement('option');o.value=v;o.textContent=l;s.appendChild(o);}
+  add('all','All (11-29)');
+  add('11,12,13,14,15','11-15');
+  add('16,17,18,19,20','16-20');
+  add('21,22,23,24,25','21-25');
+  add('26,27,28,29','26-29');
+  TABLES.forEach(function(t){add(String(t),String(t));});
+}
+buildRangeSelect('mcqRange');
+buildRangeSelect('typeRange');
+
+// ============================================================
+// LEARN
+// ============================================================
+(function(){
+  var container=document.getElementById('tableSelector');
+  TABLES.forEach(function(t){
+    var btn=document.createElement('button');
+    btn.className='table-btn';
+    btn.textContent=t;
+    btn.onclick=(function(num,b){return function(){showTable(num,b);};})(t,btn);
+    container.appendChild(btn);
+  });
+})();
+
+function showTable(t,btn){
+  document.querySelectorAll('.table-btn').forEach(function(b){b.classList.remove('selected');});
+  btn.classList.add('selected');
+  var d=document.getElementById('tableDisplay');
+  var html='<div class="table-header">Table of '+t+'</div>';
+  LEARN_MULTS.forEach(function(m,i){
+    var res=t*m;
+    var twins=(TWIN_MAP[res]||[]).filter(function(k){return k!==t+'x'+m;});
+    var tag=twins.length?' <span class="row-tag">= '+twins[0]+'</span>':'';
+    html+='<div class="table-row" style="animation-delay:'+(i*0.025)+'s">'
+      +'<span class="row-index">'+m+'.</span>'
+      +'<span class="row-expr">'+t+' x '+m+'<span class="row-eq"> = </span></span>'
+      +'<span class="row-result">'+res+'</span>'
+      +tag+'</div>';
+  });
+  d.innerHTML=html;
+}
+
+// ============================================================
+// MCQ
+// ============================================================
+var mcqQ=[],mcqIdx=0,mcqC=0,mcqW=0,mcqDone=false,mcqTimes=[],mcqQStart=0;
+
+function startMCQ(){
+  var range=getTables(document.getElementById('mcqRange').value);
+  var cv=document.getElementById('mcqCount').value;
+  var all=shuffle(getAll(range));
+  var count=cv==='all'?all.length:Math.min(parseInt(cv),all.length);
+  mcqQ=all.slice(0,count); mcqIdx=0;mcqC=0;mcqW=0;mcqTimes=[];
+  document.getElementById('mcqScoreBar').style.display='flex';
+  document.getElementById('mcqCard').classList.add('active');
+  document.getElementById('mcqResults').classList.remove('active');
+  updateMCQScore(); loadMCQ();
+}
+function loadMCQ(){
+  mcqDone=false; mcqQStart=Date.now();
+  var q=mcqQ[mcqIdx];
+  var timeSec=parseInt(document.getElementById('mcqTime').value);
+  document.getElementById('mcqProgressFill').style.width=(mcqIdx/mcqQ.length*100)+'%';
+  document.getElementById('mcqQuestion').innerHTML=q.t+' <span>x</span> '+q.m;
+  document.getElementById('mcqSubtitle').textContent='Q '+(mcqIdx+1)+' of '+mcqQ.length;
+  document.getElementById('mcqFeedback').textContent='';
+  document.getElementById('mcqFeedback').className='quiz-feedback';
+  document.getElementById('mcqNext').classList.remove('visible');
+  var correct=q.ans;
+  var wrongArr=[];
+  var wrongSet={};
+  wrongSet[correct]=true;
+  var attempts=0;
+  while(wrongArr.length<3 && attempts<300){
+    attempts++;
+    var delta=(Math.random()<0.5?1:-1)*(Math.floor(Math.random()*6)+1);
+    var base=Math.random()<0.5?q.t:q.m;
+    var w=correct+delta*base;
+    if(w>0 && !wrongSet[w]){wrongSet[w]=true;wrongArr.push(w);}
+  }
+  // guaranteed fallback
+  for(var off=1;wrongArr.length<3;off++){
+    if(!wrongSet[correct+off]){wrongSet[correct+off]=true;wrongArr.push(correct+off);}
+  }
+  var opts=shuffle([correct].concat(wrongArr));
+  var grid=document.getElementById('mcqOptions');
+  grid.innerHTML='';
+  opts.forEach(function(o){
+    var btn=document.createElement('button');
+    btn.className='option-btn'; btn.textContent=o;
+    btn.onclick=(function(b,chosen){return function(){answerMCQ(b,chosen,correct);};})(btn,o);
+    grid.appendChild(btn);
+  });
+  startTimer(timeSec,'mcqRingFill','mcqTimerText','mcqTimerWrap',function(){if(!mcqDone)timeoutMCQ(correct);});
+}
+function answerMCQ(btn,chosen,correct){
+  if(mcqDone) return;
+  mcqDone=true; stopTimer();
+  mcqTimes.push((Date.now()-mcqQStart)/1000);
+  document.querySelectorAll('#mcqOptions .option-btn').forEach(function(b){
+    b.disabled=true;
+    if(+b.textContent===correct) b.classList.add('correct');
+  });
+  var fb=document.getElementById('mcqFeedback');
+  if(chosen===correct){btn.classList.add('correct');fb.textContent='Correct!';fb.className='quiz-feedback correct';mcqC++;}
+  else{btn.classList.add('wrong');fb.textContent='Wrong! Answer: '+correct;fb.className='quiz-feedback wrong';mcqW++;}
+  document.getElementById('mcqAvgTime').textContent=arrAvg(mcqTimes).toFixed(1);
+  incrementToday(); updateMCQScore();
+  document.getElementById('mcqNext').classList.add('visible');
+}
+function timeoutMCQ(correct){
+  mcqDone=true;
+  mcqTimes.push(parseInt(document.getElementById('mcqTime').value));
+  document.querySelectorAll('#mcqOptions .option-btn').forEach(function(b){
+    b.disabled=true;
+    if(+b.textContent===correct) b.classList.add('correct');
+    else b.classList.add('timeout-opt');
+  });
+  var fb=document.getElementById('mcqFeedback');
+  fb.textContent="Time's up! Answer: "+correct; fb.className='quiz-feedback timeout';
+  mcqW++; updateMCQScore();
+  document.getElementById('mcqAvgTime').textContent=arrAvg(mcqTimes).toFixed(1);
+  document.getElementById('mcqNext').classList.add('visible');
+}
+function nextMCQ(){mcqIdx++;if(mcqIdx>=mcqQ.length)showMCQResults();else loadMCQ();}
+function updateMCQScore(){
+  document.getElementById('mcqCorrect').textContent=mcqC;
+  document.getElementById('mcqWrong').textContent=mcqW;
+  document.getElementById('mcqTotal').textContent=mcqQ.length;
+}
+function showMCQResults(){
+  stopTimer();
+  document.getElementById('mcqCard').classList.remove('active');
+  document.getElementById('mcqResults').classList.add('active');
+  var pct=Math.round(mcqC/mcqQ.length*100);
+  var avgT=arrAvg(mcqTimes);
+  document.getElementById('mcqEmoji').textContent=medalEmoji(pct);
+  document.getElementById('mcqResultTitle').textContent=gradeText(pct);
+  document.getElementById('mcqResultScore').textContent=mcqC+' / '+mcqQ.length+' correct ('+pct+'%)';
+  document.getElementById('mcqResultTiming').textContent='Avg time per question: '+avgT.toFixed(1)+'s';
+  saveSession('MCQ',mcqC,mcqQ.length,avgT);
+}
+
+// ============================================================
+// TYPE / PRACTICE
+// ============================================================
+var typeQ=[],typeIdx=0,typeC=0,typeW=0,typeDone=false,typeTimes=[],typeQStart=0;
+
+function startType(){
+  var range=getTables(document.getElementById('typeRange').value);
+  var cv=parseInt(document.getElementById('typeCount').value);
+  var all=shuffle(getAll(range));
+  typeQ=all.slice(0,Math.min(cv,all.length)); typeIdx=0;typeC=0;typeW=0;typeTimes=[];
+  document.getElementById('typeScoreBar').style.display='flex';
+  document.getElementById('typeCard').classList.add('active');
+  document.getElementById('typeResults').classList.remove('active');
+  updateTypeScore(); loadType();
+}
+function loadType(){
+  typeDone=false; typeQStart=Date.now();
+  var q=typeQ[typeIdx];
+  var timeSec=parseInt(document.getElementById('typeTime').value);
+  document.getElementById('typeProgressFill').style.width=(typeIdx/typeQ.length*100)+'%';
+  document.getElementById('typeQuestion').innerHTML=q.t+' <span>x</span> '+q.m+' = ?';
+  document.getElementById('typeFeedback').textContent='';
+  document.getElementById('typeFeedback').className='quiz-feedback';
+  document.getElementById('typeNext').classList.remove('visible');
+  var inp=document.getElementById('typeInput');
+  inp.value=''; inp.className='type-input'; inp.disabled=false;
+  setTimeout(function(){inp.focus();},80);
+  startTimer(timeSec,'typeRingFill','typeTimerText','typeTimerWrap',function(){if(!typeDone)timeoutType();});
+}
+function timeoutType(){
+  typeDone=true;
+  var q=typeQ[typeIdx];
+  var inp=document.getElementById('typeInput'); inp.disabled=true;
+  typeTimes.push(parseInt(document.getElementById('typeTime').value));
+  typeW++;
+  document.getElementById('typeAvgTime').textContent=arrAvg(typeTimes).toFixed(1);
+  var fb=document.getElementById('typeFeedback');
+  fb.textContent="Time's up! Answer: "+q.ans; fb.className='quiz-feedback timeout';
+  updateTypeScore(); document.getElementById('typeNext').classList.add('visible');
+}
+function handleTypeKey(e){if(e.key==='Enter')submitType();}
+function submitType(){
+  if(typeDone) return;
+  var inp=document.getElementById('typeInput');
+  var val=parseInt(inp.value); if(isNaN(val)) return;
+  typeDone=true; stopTimer();
+  typeTimes.push((Date.now()-typeQStart)/1000);
+  inp.disabled=true;
+  var q=typeQ[typeIdx];
+  var fb=document.getElementById('typeFeedback');
+  if(val===q.ans){inp.classList.add('correct-input');fb.textContent='Correct!';fb.className='quiz-feedback correct';typeC++;}
+  else{inp.classList.add('wrong-input');fb.textContent='Wrong! Answer: '+q.ans;fb.className='quiz-feedback wrong';typeW++;}
+  document.getElementById('typeAvgTime').textContent=arrAvg(typeTimes).toFixed(1);
+  incrementToday(); updateTypeScore();
+  document.getElementById('typeNext').classList.add('visible');
+}
+function nextType(){typeIdx++;if(typeIdx>=typeQ.length)showTypeResults();else loadType();}
+function updateTypeScore(){
+  document.getElementById('typeCorrect').textContent=typeC;
+  document.getElementById('typeWrong').textContent=typeW;
+  document.getElementById('typeTotal').textContent=typeQ.length;
+}
+function showTypeResults(){
+  stopTimer();
+  document.getElementById('typeCard').classList.remove('active');
+  document.getElementById('typeResults').classList.add('active');
+  var pct=Math.round(typeC/typeQ.length*100);
+  var avgT=arrAvg(typeTimes);
+  document.getElementById('typeEmoji').textContent=medalEmoji(pct);
+  document.getElementById('typeResultTitle').textContent=gradeText(pct);
+  document.getElementById('typeResultScore').textContent=typeC+' / '+typeQ.length+' correct ('+pct+'%)';
+  document.getElementById('typeResultTiming').textContent='Avg time per question: '+avgT.toFixed(1)+'s';
+  saveSession('Type',typeC,typeQ.length,avgT);
+}
+
+// ============================================================
+// CUBES
+// ============================================================
+(function renderCubes(){
+  document.getElementById('cubeGrid1').innerHTML=CUBE_BASIC.map(function(n){
+    return '<div class="cube-card">'
+      +'<div class="cube-num">'+n+'</div>'
+      +'<div class="cube-expr">'+n+'^3 = '+n+'x'+n+'x'+n+'</div>'
+      +'<div class="cube-result">'+n*n*n+'</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('cubeGrid2').innerHTML=CUBE_SPECIAL.map(function(n){
+    return '<div class="cube-card" style="border-color:rgba(192,96,240,0.25)">'
+      +'<div class="cube-num" style="color:var(--accent3)">'+n+'</div>'
+      +'<div class="cube-expr">'+n+'^3</div>'
+      +'<div class="cube-result">'+n*n*n+'</div>'
+      +'</div>';
+  }).join('');
+})();
+
+var cubeQ=[],cubeIdx=0,cubeC=0,cubeW=0,cubeDone=false,cubeTimes=[],cubeQStart=0;
+function getCubePool(set){
+  if(set==='basic') return CUBE_BASIC;
+  if(set==='special') return CUBE_SPECIAL;
+  return CUBE_BASIC.concat(CUBE_SPECIAL);
+}
+function startCubeQuiz(){
+  var pool=shuffle(getCubePool(document.getElementById('cubeSet').value));
+  cubeQ=pool.map(function(n){return {n:n,ans:n*n*n};});
+  cubeIdx=0;cubeC=0;cubeW=0;cubeTimes=[];
+  document.getElementById('cubeScoreBar').style.display='flex';
+  document.getElementById('cubeCard').classList.add('active');
+  document.getElementById('cubeResults').classList.remove('active');
+  updateCubeScore(); loadCube();
+}
+function loadCube(){
+  cubeDone=false; cubeQStart=Date.now();
+  var q=cubeQ[cubeIdx];
+  var timeSec=parseInt(document.getElementById('cubeTime').value);
+  document.getElementById('cubeProgressFill').style.width=(cubeIdx/cubeQ.length*100)+'%';
+  document.getElementById('cubeQuestion').textContent=q.n+'^3';
+  document.getElementById('cubeFeedback').textContent='';
+  document.getElementById('cubeFeedback').className='quiz-feedback';
+  document.getElementById('cubeNext').classList.remove('visible');
+  var inp=document.getElementById('cubeInput');
+  inp.value=''; inp.className='type-input'; inp.disabled=false;
+  setTimeout(function(){inp.focus();},80);
+  startTimer(timeSec,'cubeRingFill','cubeTimerText','cubeTimerWrap',function(){if(!cubeDone)timeoutCube();});
+}
+function timeoutCube(){
+  cubeDone=true;
+  var q=cubeQ[cubeIdx];
+  document.getElementById('cubeInput').disabled=true;
+  cubeTimes.push(parseInt(document.getElementById('cubeTime').value));
+  cubeW++;
+  document.getElementById('cubeAvgTime').textContent=arrAvg(cubeTimes).toFixed(1);
+  var fb=document.getElementById('cubeFeedback');
+  fb.textContent="Time's up! "+q.n+"^3 = "+q.ans; fb.className='quiz-feedback timeout';
+  updateCubeScore(); document.getElementById('cubeNext').classList.add('visible');
+}
+function handleCubeKey(e){if(e.key==='Enter')submitCube();}
+function submitCube(){
+  if(cubeDone) return;
+  var inp=document.getElementById('cubeInput');
+  var val=parseInt(inp.value); if(isNaN(val)) return;
+  cubeDone=true; stopTimer();
+  cubeTimes.push((Date.now()-cubeQStart)/1000);
+  inp.disabled=true;
+  var q=cubeQ[cubeIdx];
+  var fb=document.getElementById('cubeFeedback');
+  if(val===q.ans){inp.classList.add('correct-input');fb.textContent='Correct!';fb.className='quiz-feedback correct';cubeC++;}
+  else{inp.classList.add('wrong-input');fb.textContent='Wrong! '+q.n+'^3 = '+q.ans;fb.className='quiz-feedback wrong';cubeW++;}
+  document.getElementById('cubeAvgTime').textContent=arrAvg(cubeTimes).toFixed(1);
+  incrementToday(); updateCubeScore();
+  document.getElementById('cubeNext').classList.add('visible');
+}
+function nextCube(){cubeIdx++;if(cubeIdx>=cubeQ.length)showCubeResults();else loadCube();}
+function updateCubeScore(){
+  document.getElementById('cubeCorrect').textContent=cubeC;
+  document.getElementById('cubeWrong').textContent=cubeW;
+  document.getElementById('cubeTotal').textContent=cubeQ.length;
+}
+function showCubeResults(){
+  stopTimer();
+  document.getElementById('cubeCard').classList.remove('active');
+  document.getElementById('cubeResults').classList.add('active');
+  var pct=Math.round(cubeC/cubeQ.length*100);
+  var avgT=arrAvg(cubeTimes);
+  document.getElementById('cubeEmoji').textContent=medalEmoji(pct);
+  document.getElementById('cubeResultTitle').textContent=gradeText(pct);
+  document.getElementById('cubeResultScore').textContent=cubeC+' / '+cubeQ.length+' correct ('+pct+'%)';
+  document.getElementById('cubeResultTiming').textContent='Avg time per question: '+avgT.toFixed(1)+'s';
+  saveSession('Cube',cubeC,cubeQ.length,avgT);
+}
+
+// ============================================================
+// CONSECUTIVE MULTIPLES
+// ============================================================
+(function renderConsecLists(){
+  document.getElementById('consecList').innerHTML=CONSEC_SINGLE.map(function(p){
+    return '<div class="consec-pair">'
+      +'<div class="consec-nums">'+p.a+' x '+p.b+'</div>'
+      +'<span class="consec-badge">n x (n+1)</span>'
+      +'<div class="consec-result">= '+p.ans+'</div>'
+      +'</div>';
+  }).join('');
+  document.getElementById('consecListMulti').innerHTML=CONSEC_MULTI.map(function(p){
+    return '<div class="consec-pair">'
+      +'<div class="consec-nums">'+p.a+' x '+p.b+'</div>'
+      +'<span class="consec-badge">multi-digit</span>'
+      +'<div class="consec-result">= '+p.ans+'</div>'
+      +'</div>';
+  }).join('');
+})();
+
+var consecQ=[],consecIdx=0,consecC=0,consecW=0,consecDone=false,consecTimes=[],consecQStart=0;
+function getConsecPool(set){
+  if(set==='single') return CONSEC_SINGLE;
+  if(set==='multi')  return CONSEC_MULTI;
+  return CONSEC_SINGLE.concat(CONSEC_MULTI);
+}
+function startConsecQuiz(){
+  consecQ=shuffle(getConsecPool(document.getElementById('consecSet').value));
+  consecIdx=0;consecC=0;consecW=0;consecTimes=[];
+  document.getElementById('consecScoreBar').style.display='flex';
+  document.getElementById('consecCard').classList.add('active');
+  document.getElementById('consecResults').classList.remove('active');
+  updateConsecScore(); loadConsec();
+}
+function loadConsec(){
+  consecDone=false; consecQStart=Date.now();
+  var q=consecQ[consecIdx];
+  var timeSec=parseInt(document.getElementById('consecTime').value);
+  document.getElementById('consecProgressFill').style.width=(consecIdx/consecQ.length*100)+'%';
+  document.getElementById('consecQuestion').innerHTML=q.a+' <span>x</span> '+q.b;
+  document.getElementById('consecFeedback').textContent='';
+  document.getElementById('consecFeedback').className='quiz-feedback';
+  document.getElementById('consecNext').classList.remove('visible');
+  var inp=document.getElementById('consecInput');
+  inp.value=''; inp.className='type-input'; inp.disabled=false;
+  setTimeout(function(){inp.focus();},80);
+  startTimer(timeSec,'consecRingFill','consecTimerText','consecTimerWrap',function(){if(!consecDone)timeoutConsec();});
+}
+function timeoutConsec(){
+  consecDone=true;
+  var q=consecQ[consecIdx];
+  document.getElementById('consecInput').disabled=true;
+  consecTimes.push(parseInt(document.getElementById('consecTime').value));
+  consecW++;
+  document.getElementById('consecAvgTime').textContent=arrAvg(consecTimes).toFixed(1);
+  var fb=document.getElementById('consecFeedback');
+  fb.textContent="Time's up! Answer: "+q.ans; fb.className='quiz-feedback timeout';
+  updateConsecScore(); document.getElementById('consecNext').classList.add('visible');
+}
+function handleConsecKey(e){if(e.key==='Enter')submitConsec();}
+function submitConsec(){
+  if(consecDone) return;
+  var inp=document.getElementById('consecInput');
+  var val=parseInt(inp.value); if(isNaN(val)) return;
+  consecDone=true; stopTimer();
+  consecTimes.push((Date.now()-consecQStart)/1000);
+  inp.disabled=true;
+  var q=consecQ[consecIdx];
+  var fb=document.getElementById('consecFeedback');
+  if(val===q.ans){inp.classList.add('correct-input');fb.textContent='Correct!';fb.className='quiz-feedback correct';consecC++;}
+  else{inp.classList.add('wrong-input');fb.textContent='Wrong! Answer: '+q.ans;fb.className='quiz-feedback wrong';consecW++;}
+  document.getElementById('consecAvgTime').textContent=arrAvg(consecTimes).toFixed(1);
+  incrementToday(); updateConsecScore();
+  document.getElementById('consecNext').classList.add('visible');
+}
+function nextConsec(){consecIdx++;if(consecIdx>=consecQ.length)showConsecResults();else loadConsec();}
+function updateConsecScore(){
+  document.getElementById('consecCorrect').textContent=consecC;
+  document.getElementById('consecWrong').textContent=consecW;
+  document.getElementById('consecTotal').textContent=consecQ.length;
+}
+function showConsecResults(){
+  stopTimer();
+  document.getElementById('consecCard').classList.remove('active');
+  document.getElementById('consecResults').classList.add('active');
+  var pct=Math.round(consecC/consecQ.length*100);
+  var avgT=arrAvg(consecTimes);
+  document.getElementById('consecEmoji').textContent=medalEmoji(pct);
+  document.getElementById('consecResultTitle').textContent=gradeText(pct);
+  document.getElementById('consecResultScore').textContent=consecC+' / '+consecQ.length+' correct ('+pct+'%)';
+  document.getElementById('consecResultTiming').textContent='Avg time per question: '+avgT.toFixed(1)+'s';
+  saveSession('Consec',consecC,consecQ.length,avgT);
+}
+
+// ============================================================
+// TWINS
+// ============================================================
+(function renderTwins(){
+  var el=document.getElementById('twinsList');
+  var twins=[];
+  Object.keys(TWIN_MAP).forEach(function(ans){
+    if(TWIN_MAP[ans].length>=2) twins.push([ans,TWIN_MAP[ans]]);
+  });
+  twins.sort(function(a,b){return +a[0]-+b[0];});
+  el.innerHTML=twins.map(function(pair){
+    var ans=pair[0], pairs=pair[1];
+    return '<div class="twin-card">'
+      +'<div class="twin-result">= '+ans+'</div>'
+      +'<div class="twin-pairs">'+pairs.map(function(p){return '<span class="twin-chip">'+p+'</span>';}).join('')+'</div>'
+      +'</div>';
+  }).join('');
+})();
+
+// ============================================================
+// TRACKER
+// ============================================================
+function renderTracker(){
+  var hist=getHistory();
+  var statsEl=document.getElementById('trackerStats');
+  var histEl=document.getElementById('historyList');
+  var speedEl=document.getElementById('speedChart');
+  var accEl=document.getElementById('accChart');
+
+  var totalQ=hist.reduce(function(s,h){return s+h.total;},0);
+  var totalC=hist.reduce(function(s,h){return s+h.correct;},0);
+  var overallAcc=totalQ?Math.round(totalC/totalQ*100):0;
+  var allTimes=hist.map(function(s){return s.avgTime;}).filter(function(t){return t>0;});
+  var bestTime=allTimes.length?Math.min.apply(null,allTimes).toFixed(1):'-';
+  var recentAvg=hist.slice(0,5).map(function(s){return s.avgTime;}).filter(function(t){return t>0;});
+  var recentStr=recentAvg.length?(recentAvg.reduce(function(a,b){return a+b;},0)/recentAvg.length).toFixed(1):'-';
+
+  statsEl.innerHTML=
+    '<div class="tracker-stat"><div class="tracker-num">'+hist.length+'</div><div class="tracker-lbl">Sessions</div></div>'
+    +'<div class="tracker-stat"><div class="tracker-num">'+totalQ+'</div><div class="tracker-lbl">Total Qs</div></div>'
+    +'<div class="tracker-stat"><div class="tracker-num">'+overallAcc+'%</div><div class="tracker-lbl">Overall Acc</div></div>'
+    +'<div class="tracker-stat"><div class="tracker-num">'+bestTime+'s</div><div class="tracker-lbl">Best Avg/Q</div><div class="tracker-sub">Recent: '+recentStr+'s</div></div>';
+
+  var last10=hist.slice(0,10).reverse();
+  if(last10.length){
+    var maxT=Math.max.apply(null,last10.map(function(s){return s.avgTime||0;}).concat([1]));
+    speedEl.innerHTML=last10.map(function(s,i){
+      var label='S'+(hist.length-last10.length+i+1);
+      var w=Math.round(s.avgTime/maxT*100);
+      var col=s.avgTime<5?'var(--correct)':s.avgTime<10?'var(--accent)':'var(--wrong)';
+      return '<div class="bar-row"><div class="bar-lbl">'+label+'</div><div class="bar-track"><div class="bar-fill" style="width:'+w+'%;background:'+col+'"></div></div><div class="bar-val">'+s.avgTime+'s</div></div>';
+    }).join('');
+    accEl.innerHTML=last10.map(function(s,i){
+      var label='S'+(hist.length-last10.length+i+1);
+      var ac=s.total?Math.round(s.correct/s.total*100):0;
+      var col=ac>=90?'var(--correct)':ac>=70?'var(--accent)':'var(--wrong)';
+      return '<div class="bar-row"><div class="bar-lbl">'+label+'</div><div class="bar-track"><div class="bar-fill" style="width:'+ac+'%;background:'+col+'"></div></div><div class="bar-val">'+ac+'%</div></div>';
+    }).join('');
+  } else {
+    speedEl.innerHTML='<div style="color:var(--muted);font-size:0.8rem;padding:8px 0">No sessions yet</div>';
+    accEl.innerHTML='';
+  }
+
+  if(!hist.length){
+    histEl.innerHTML='<div style="padding:16px;color:var(--muted);text-align:center;font-family:JetBrains Mono,monospace;font-size:0.8rem">No sessions yet - start a quiz!</div>';
+    return;
+  }
+  histEl.innerHTML=hist.map(function(h){
+    return '<div class="history-item">'
+      +'<div class="hist-date">'+h.date+'</div>'
+      +'<div class="hist-mode">'+h.mode+'</div>'
+      +'<div class="hist-score">'+h.correct+'/'+h.total+' ('+Math.round(h.correct/h.total*100)+'%)</div>'
+      +'<div class="hist-time">'+h.avgTime+'s/q</div>'
+      +'</div>';
+  }).join('');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+updateStreak();
+</script>
+</body>
+</html>
